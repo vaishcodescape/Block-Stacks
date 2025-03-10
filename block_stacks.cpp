@@ -7,6 +7,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <ctime>
+#include <fstream>
 
 #ifdef _WIN32
     #include <conio.h>
@@ -61,6 +62,29 @@ using namespace std;
 
 const int WIDTH = 10, HEIGHT = 20;
 int board[HEIGHT][WIDTH] = {0};
+int score = 0;
+int highScore = 0;
+int speed = 400;
+
+void loadHighScore() {
+    ifstream file("highscore.txt");
+    if (file.is_open()) {
+        file >> highScore;
+        file.close();
+    }
+}
+
+void saveHighScore() {
+    if (score > highScore) {
+        highScore = score;
+        ofstream file("highscore.txt");
+        if (file.is_open()) {
+            file << highScore;
+            file.close();
+        }
+    }
+}
+
 const int TETROMINOS[7][4][4] = { 
     {{0,0,0,0}, {1,1,1,1}, {0,0,0,0}, {0,0,0,0}},
     {{1,1,0,0}, {1,1,0,0}, {0,0,0,0}, {0,0,0,0}},
@@ -90,6 +114,22 @@ struct Tetromino {
     }
 };
 
+void draw(Tetromino &t) {
+    system("clear");
+    for (int i = 0; i < HEIGHT; i++) {
+        for (int j = 0; j < WIDTH; j++) {
+            bool isTetromino = false;
+            for (int r = 0; r < 4; r++)
+                for (int c = 0; c < 4; c++)
+                    if (t.shape[r][c] && i == t.y + r && j == t.x + c)
+                        isTetromino = true;
+            cout << (isTetromino ? "# " : board[i][j] ? "* " : ". ");
+        }
+        cout << endl;
+    }
+    cout << "Score: " << score << " High Score: " << highScore << endl;
+}
+
 bool isValidMove(Tetromino &t, int dx, int dy) {
     for (int i = 0; i < 4; i++)
         for (int j = 0; j < 4; j++)
@@ -118,30 +158,17 @@ void clearRows() {
             for (int k = i; k > 0; k--)
                 memcpy(board[k], board[k - 1], sizeof(board[k]));
             memset(board[0], 0, sizeof(board[0]));
+            score += 100;
+            speed = max(100, speed - 20);
             i++;
         }
     }
 }
 
-void draw(Tetromino &t) {
-    system("clear");
-    for (int i = 0; i < HEIGHT; i++) {
-        for (int j = 0; j < WIDTH; j++) {
-            bool isTetromino = false;
-            for (int r = 0; r < 4; r++)
-                for (int c = 0; c < 4; c++)
-                    if (t.shape[r][c] && i == t.y + r && j == t.x + c)
-                        isTetromino = true;
-            cout << (isTetromino ? "# " : board[i][j] ? "* " : ". ");
-        }
-        cout << endl;
-    }
-}
-
 void gameLoop() {
+    loadHighScore();
     srand(time(0));
     Tetromino current(rand() % 7);
-
     while (true) {
         draw(current);
         if (_kbhit()) {
@@ -154,13 +181,14 @@ void gameLoop() {
             }
             if (key == 's' && isValidMove(current, 0, 1)) current.y++;
         }
-        Sleep(200);
+        Sleep(speed);
         if (!isValidMove(current, 0, 1)) {
             placeTetromino(current);
             clearRows();
             current = Tetromino(rand() % 7);
             if (!isValidMove(current, 0, 0)) {
-                cout << "Game Over!" << endl;
+                saveHighScore();
+                cout << "Game Over! Score: " << score << " High Score: " << highScore << endl;
                 break;
             }
         } else current.y++;
