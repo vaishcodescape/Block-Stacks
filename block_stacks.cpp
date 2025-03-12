@@ -1,4 +1,4 @@
-/*Block-Stacks*/
+/Block-Stacks/
 //A Tetris Based game made in pure C++
 //Made by vaishcodescape and sam5506
 
@@ -66,6 +66,19 @@ int score = 0;
 int highScore = 0;
 int speed = 400;
 
+// Colors for Tetrominoes
+const string COLORS[7] = {
+    "\033[31m", // Red
+    "\033[32m", // Green
+    "\033[33m", // Yellow
+    "\033[34m", // Blue
+    "\033[35m", // Magenta
+    "\033[36m", // Cyan
+    "\033[91m"  // Bright Red
+};
+
+const string RESET = "\033[0m";
+
 void loadHighScore() {
     ifstream file("highscore.txt");
     if (file.is_open()) {
@@ -98,8 +111,9 @@ const int TETROMINOS[7][4][4] = {
 struct Tetromino {
     int shape[4][4];
     int x, y;
+    int type; // Store the type for color
     
-    Tetromino(int type) {
+    Tetromino(int type) : type(type) {
         memcpy(shape, TETROMINOS[type], sizeof(shape));
         x = WIDTH / 2 - 2;
         y = 0;
@@ -119,15 +133,23 @@ void draw(Tetromino &t) {
     for (int i = 0; i < HEIGHT; i++) {
         for (int j = 0; j < WIDTH; j++) {
             bool isTetromino = false;
+            int colorIndex = -1;
             for (int r = 0; r < 4; r++)
                 for (int c = 0; c < 4; c++)
-                    if (t.shape[r][c] && i == t.y + r && j == t.x + c)
+                    if (t.shape[r][c] && i == t.y + r && j == t.x + c) {
                         isTetromino = true;
-            cout << (isTetromino ? "# " : board[i][j] ? "* " : ". ");
+                        colorIndex = t.type;
+                    }
+            if (isTetromino) 
+                cout << COLORS[colorIndex] << "■ " << RESET;
+            else if (board[i][j]) 
+                cout << COLORS[board[i][j] - 1] << "■ " << RESET;
+            else 
+                cout << ". ";
         }
         cout << endl;
     }
-    cout << "Score: " << score << " High Score: " << highScore << endl;
+    cout << "Score: " << score << "  High Score: " << highScore << endl;
 }
 
 bool isValidMove(Tetromino &t, int dx, int dy) {
@@ -146,7 +168,7 @@ void placeTetromino(Tetromino &t) {
     for (int i = 0; i < 4; i++)
         for (int j = 0; j < 4; j++)
             if (t.shape[i][j])
-                board[t.y + i][t.x + j] = 1;
+                board[t.y + i][t.x + j] = t.type + 1; // store type+1 for color
 }
 
 void clearRows() {
@@ -168,6 +190,15 @@ void clearRows() {
 void gameLoop() {
     loadHighScore();
     srand(time(0));
+    
+    #ifdef _WIN32
+        HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        DWORD dwMode = 0;
+        GetConsoleMode(hOut, &dwMode);
+        dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+        SetConsoleMode(hOut, dwMode);
+    #endif
+    
     Tetromino current(rand() % 7);
     while (true) {
         draw(current);
@@ -197,5 +228,5 @@ void gameLoop() {
 
 int main() {
     gameLoop();
-    return 0;
+    return 0;
 }
