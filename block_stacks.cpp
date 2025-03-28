@@ -1,6 +1,6 @@
 /*Block-Stacks*/
-//A Tetris Based game made in pure C++
-//Made by vaishcodescape and sam5506
+// A Tetris-Based game made in pure C++
+// Made by vaishcodescape and sam5506
 
 #include <iostream>
 #include <vector>
@@ -79,6 +79,35 @@ const string COLORS[7] = {
 
 const string RESET = "\033[0m";
 
+void loadingscreen() {
+    system("clear");
+
+    string art = R"(
+ ________  ___       ________  ________  ___  __            ________  _________  ________  ________  ___  __    ________      
+|\   __  \|\  \     |\   __  \|\   ____\|\  \|\  \         |\   ____\|\___   ___\\   __  \|\   ____\|\  \|\  \ |\   ____\     
+\ \  \|\ /\ \  \    \ \  \|\  \ \  \___|\ \  \/  /|_       \ \  \___|\|___ \  \_\ \  \|\  \ \  \___|\ \  \/  /|\ \  \___|_    
+ \ \   __  \ \  \    \ \  \\\  \ \  \    \ \   ___  \       \ \_____  \   \ \  \ \ \   __  \ \  \    \ \   ___  \ \_____  \   
+  \ \  \|\  \ \  \____\ \  \\\  \ \  \____\ \  \\ \  \       \|____|\  \   \ \  \ \ \  \ \  \ \  \____\ \  \\ \  \|____|\  \  
+   \ \_______\ \_______\ \_______\ \_______\ \__\\ \__\        ____\_\  \   \ \__\ \ \__\ \__\ \_______\ \__\\ \__\____\_\  \ 
+    \|_______|\|_______|\|_______|\|_______|\|__| \|__|       |\_________\   \|__|  \|__|\|__|\|_______|\|__| \|__|\_________\
+                                                              \|_________|                                        \|_________|
+    )";
+
+    cout << art << endl;
+    cout << "Made by vaishcodescape(Aditya Vaish) and sam5506(Samyak Shah)" << endl;
+
+    cout << "\nLoading";
+    for (int i = 0; i < 5; i++) {
+        cout << ".";
+        cout.flush();
+        Sleep(500);
+    }
+
+    cout << "\nGame is starting!\n";
+    Sleep(1000);
+    system("clear");
+}
+
 void loadHighScore() {
     ifstream file("highscore.txt");
     if (file.is_open()) {
@@ -111,7 +140,7 @@ const int TETROMINOS[7][4][4] = {
 struct Tetromino {
     int shape[4][4];
     int x, y;
-    int type; // Store the type for color
+    int type;  
     
     Tetromino(int type) : type(type) {
         memcpy(shape, TETROMINOS[type], sizeof(shape));
@@ -168,7 +197,7 @@ void placeTetromino(Tetromino &t) {
     for (int i = 0; i < 4; i++)
         for (int j = 0; j < 4; j++)
             if (t.shape[i][j])
-                board[t.y + i][t.x + j] = t.type + 1; // store type+1 for color
+                board[t.y + i][t.x + j] = t.type + 1; 
 }
 
 void clearRows() {
@@ -185,6 +214,15 @@ void clearRows() {
             i++;
         }
     }
+}
+
+// Hard Drop Function
+void hardDrop(Tetromino &t) {
+    while (isValidMove(t, 0, 1)) {
+        t.y++; 
+    }
+    placeTetromino(t); 
+    clearRows();       
 }
 
 void gameLoop() {
@@ -204,13 +242,22 @@ void gameLoop() {
         draw(current);
         if (_kbhit()) {
             char key = _getch();
-            if (key == 'a' && isValidMove(current, -1, 0)) current.x--;
-            if (key == 'd' && isValidMove(current, 1, 0)) current.x++;
-            if (key == 'w') {
+            if (key == 'a' && isValidMove(current, -1, 0)) current.x--;  
+            if (key == 'd' && isValidMove(current, 1, 0)) current.x++;   
+            if (key == 'w') {                                            
                 current.rotate();
-                if (!isValidMove(current, 0, 0)) current.rotate(); 
+                if (!isValidMove(current, 0, 0)) current.rotate();  
             }
-            if (key == 's' && isValidMove(current, 0, 1)) current.y++;
+            if (key == 's' && isValidMove(current, 0, 1)) current.y++;   
+            if (key == ' ') {                                           
+                hardDrop(current);                                       
+                current = Tetromino(rand() % 7);                         
+                if (!isValidMove(current, 0, 0)) {                      
+                    saveHighScore();                                     
+                    cout << "Game Over! Score: " << score << " High Score: " << highScore << endl;
+                    break;                                              
+                }
+            }
         }
         Sleep(speed);
         if (!isValidMove(current, 0, 1)) {
@@ -227,6 +274,7 @@ void gameLoop() {
 }
 
 int main() {
+    loadingscreen();
     gameLoop();
-    return 0;
+    return 0;
 }
