@@ -48,6 +48,7 @@ block_stacks.exe
 - 🡆 **D** - Move right
 - 🡇 **S** - Move down
 - 🔄 **W** - Rotate piece
+- Press the Space Bar for Hard Drop
 
 ## **How to Play**
 1. **Blocks (Tetrominoes) will fall from the top.**
